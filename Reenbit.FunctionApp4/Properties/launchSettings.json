@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ReenbitFunctionApp4": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7210",
+      "launchBrowser": false
+    }
+  }
+}

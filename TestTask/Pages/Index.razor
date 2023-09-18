@@ -1,0 +1,68 @@
+﻿@page "/"
+@using TestTask.Services
+@inject IBlobStorageService Blob
+
+<PageTitle>Home</PageTitle>
+
+<div>
+    <div class="text-center">
+        <h1>Hello!</h1>
+        <h3>Please, submit a form:</h3>
+    </div>
+    <div class="col-md-6 mx-auto">
+        <EditForm Model="@Model" class="was-validated">
+            <div class="row-cols-1">
+                <label>
+                    Upload .docx file:
+                    <InputFile class="form-control" disabled="@fileLoading" OnChange="@OnInputFileChange" single accept=".doc,.docx" required />
+                </label>
+                @if (fileLoading)
+                {
+                    <span>Loading...</span>
+                }
+            </div>
+            <div class="form-group">
+                <label for="emailInput">Input email:</label>
+                <InputText @bind-Value="Model.Email" type="email" class="form-control" id="emailInput" required />
+            </div>
+            <button type="submit" class="btn btn-primary" disabled="@fileLoading" @onclick="OnSubmit">Send</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private string warninngMessage;
+    private bool fileLoading;
+    private FormModel Model;
+    IBrowserFile file;
+    
+    protected override void OnInitialized() =>
+        Model ??= new() { Email = String.Empty };
+    
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+        this.StateHasChanged();
+    }
+    
+    private async void OnSubmit()
+    {
+        fileLoading = true;
+        
+        try
+        {
+            var blobUrl = await Blob.UploadFileToBlobAsync(file.Name, file.ContentType, file.OpenReadStream(20971520));
+            if (blobUrl == null)
+            {
+                warninngMessage = "File Upload failed, Please try again!!";
+            }
+        }
+        catch (Exception ex)
+        {
+            warninngMessage = "File Upload failed, Please try again!!";
+        }   
+
+        fileLoading = false;
+        this.StateHasChanged();
+    }
+}
