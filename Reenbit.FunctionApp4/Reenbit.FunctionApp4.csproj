@@ -5,8 +5,10 @@
         <UserSecretsId>a220ec20-ae93-4ac7-97fd-2c327a583096</UserSecretsId>
     </PropertyGroup>
     <ItemGroup>
+        <PackageReference Include="MailKit" Version="4.2.0" />
         <PackageReference Include="Microsoft.Azure.WebJobs.Extensions.Storage.Blobs" Version="5.0.0" />
         <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.2.0"/>
+        <PackageReference Include="MimeKit" Version="4.2.0" />
     </ItemGroup>
     <ItemGroup>
         <None Update="host.json">
