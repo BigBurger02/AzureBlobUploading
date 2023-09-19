@@ -1,5 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 
 namespace TestTask.Services;
 
@@ -29,8 +30,24 @@ public class BlobStorageService : IBlobStorageService
             var blob = container.GetBlobClient(fileName);
             await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
             await blob.UploadAsync(fileStream, new BlobHttpHeaders { ContentType = contentType });
-            var urlString = blob.Uri.ToString();
-            return urlString;
+            
+            if (blob.CanGenerateSasUri)
+            {
+                var bsb = new BlobSasBuilder()
+                {
+                    BlobName = fileName,
+                    Resource = "b",
+                    BlobContainerName = _blobContainerName,
+                    Protocol = SasProtocol.Https,
+                    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
+                };
+                bsb.SetPermissions(BlobSasPermissions.Read);
+                return blob.GenerateSasUri(bsb).ToString();   
+            }
+            else
+            {
+                return blob.Uri.ToString();
+            }
         }
         catch (Exception ex)
         {
