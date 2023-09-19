@@ -6,7 +6,9 @@ using MailKit.Security;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using TestTask.Data;
 
 namespace TestTask.Api;
 
@@ -16,17 +18,23 @@ public class TriggeredController : ControllerBase
 {
     private readonly ILogger<TriggeredController> _logger;
     private readonly IConfiguration _configuration;
+    private readonly BlobContext _context;
     
-    public TriggeredController(ILogger<TriggeredController> logger, IConfiguration configuration)
+    public TriggeredController(ILogger<TriggeredController> logger, IConfiguration configuration, BlobContext context)
     {
         _logger = logger;
         _configuration = configuration;
+        _context = context;
     }
     
     [HttpGet("{fileName}")]
     public IActionResult BlobTriggered(string fileName)
     {
-        string email = "";
+        var blobData = _context.Uploads
+            .AsNoTracking()
+            .FirstOrDefault(n => n.FileName == fileName);
+        if (blobData == null)
+            return new ObjectResult("File with that name not found.") { StatusCode = 404 };
 	
         CancellationToken ct = default;
 		
@@ -38,16 +46,16 @@ public class TriggeredController : ControllerBase
 		
             mail.From.Add(new MailboxAddress("AzureBlobUploading", "autosender@example.com"));
             mail.Sender = new MailboxAddress("AzureBlobUploading", "autosender@example.com");
-            mail.To.Add(MailboxAddress.Parse(email));
+            mail.To.Add(MailboxAddress.Parse(blobData.Email));
 
-            _logger.LogInformation("Sender / Receiver formed at {time} by {email}.", DateTime.UtcNow.ToString(), email);
+            _logger.LogInformation("Sender / Receiver formed at {time} by {email}.", DateTime.UtcNow.ToString(), blobData.Email);
 		
             var body = new BodyBuilder();
             mail.Subject = "File Uploaded";
-            body.HtmlBody = "Hi! Your file was successfully uploaded to the BLOB storage!";
+            body.HtmlBody = $"Hi! Your file was successfully uploaded to the BLOB storage: <a href=\"{blobData.Uri}\">{blobData.Uri}</a>";
             mail.Body = body.ToMessageBody();
 
-            _logger.LogInformation("Mail formed at {time} by {email}.", DateTime.UtcNow.ToString(), email);
+            _logger.LogInformation("Mail formed at {time} by {email}.", DateTime.UtcNow.ToString(), blobData.Email);
 
             #endregion
 
@@ -60,13 +68,13 @@ public class TriggeredController : ControllerBase
             smtp.Send(mail, ct);
             smtp.Disconnect(true, ct);
 
-            _logger.LogInformation("Mail sent at {time} by {email}.", DateTime.UtcNow.ToString(), email);
+            _logger.LogInformation("Mail sent at {time} by {email}.", DateTime.UtcNow.ToString(), blobData.Email);
 
             #endregion
         }
         catch (Exception)
         {
-            _logger.LogError("Send Mail thrown exception at {time} by {email}.", DateTime.UtcNow.ToString(), email);
+            _logger.LogError("Send Mail thrown exception at {time} by {email}.", DateTime.UtcNow.ToString(), blobData.Email);
             return new ObjectResult("Exception thrown while sending mail.") { StatusCode = 500 };
         }
 
