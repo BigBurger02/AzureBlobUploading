@@ -1,6 +1,10 @@
 ﻿@page "/"
 @using TestTask.Services
+@using Microsoft.EntityFrameworkCore
+@using TestTask.Data
+@using TestTask.Model
 @inject IBlobStorageService Blob
+@inject IDbContextFactory<BlobContext> DbFactory
 
 <PageTitle>Home</PageTitle>
 
@@ -33,6 +37,7 @@
 @code {
     private string warninngMessage;
     private bool fileLoading;
+    private string blobUrl;
     private FormModel Model;
     IBrowserFile file;
     
@@ -51,7 +56,7 @@
         
         try
         {
-            var blobUrl = await Blob.UploadFileToBlobAsync(file.Name, file.ContentType, file.OpenReadStream(20971520));
+            blobUrl = await Blob.UploadFileToBlobAsync(file.Name, file.ContentType, file.OpenReadStream(20971520));
             if (blobUrl == null)
             {
                 warninngMessage = "File Upload failed, Please try again!!";
@@ -62,7 +67,24 @@
             warninngMessage = "File Upload failed, Please try again!!";
         }   
 
+        await AddUploadAsync();
+        
         fileLoading = false;
+        
         this.StateHasChanged();
+    }
+    
+    private async Task AddUploadAsync()
+    {
+        await using var context = await DbFactory.CreateDbContextAsync();
+
+        var newUpload = new Uploads()
+        {
+            Email = Model.Email,
+            FileName = file.Name,
+            Uri = blobUrl
+        };
+        context.Uploads.Add(newUpload);
+        await context.SaveChangesAsync();
     }
 }
