@@ -3,9 +3,5 @@
     "Values": {
         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
         "AzureWebJobsStorage": ""
-    },
-    "SMTP": {
-        "UserName": "",
-        "PassWord": ""
     }
 }
