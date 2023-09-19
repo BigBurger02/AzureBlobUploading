@@ -21,6 +21,8 @@ public class BlobStorageService : IBlobStorageService
     
     public async Task<string> UploadFileToBlobAsync(string fileName, string contentType, Stream fileStream)
     {
+        _logger.LogInformation($"UploadFileToBlobAsync. fileName: {fileName}, contentType: {contentType}.");
+        
         try
         {
             var container = new BlobContainerClient(_blobConnectionString, _blobContainerName);
@@ -30,6 +32,8 @@ public class BlobStorageService : IBlobStorageService
             var blob = container.GetBlobClient(fileName);
             await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
             await blob.UploadAsync(fileStream, new BlobHttpHeaders { ContentType = contentType });
+            
+            _logger.LogInformation($"UploadFileToBlobAsync, uploaded. fileName: {fileName}.");
             
             if (blob.CanGenerateSasUri)
             {
@@ -42,11 +46,16 @@ public class BlobStorageService : IBlobStorageService
                     ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
                 };
                 bsb.SetPermissions(BlobSasPermissions.Read);
-                return blob.GenerateSasUri(bsb).ToString();   
+                var uri = blob.GenerateSasUri(bsb).ToString();
+                
+                _logger.LogInformation($"UploadFileToBlobAsync, generated sas usi. fileName: {fileName}.");
+                return uri;
             }
             else
             {
-                return blob.Uri.ToString();
+                var uri = blob.Uri.ToString(); 
+                _logger.LogInformation($"UploadFileToBlobAsync, generated usi. fileName: {fileName}.");
+                return uri;
             }
         }
         catch (Exception ex)

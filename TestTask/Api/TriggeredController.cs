@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using MailKit.Security;
 using MailKit.Net.Smtp;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
@@ -30,11 +25,16 @@ public class TriggeredController : ControllerBase
     [HttpGet("{fileName}")]
     public IActionResult BlobTriggered(string fileName)
     {
+        _logger.LogInformation($"Triggered(get) api controller started. FileName: {fileName}");
+        
         var blobData = _context.Uploads
             .AsNoTracking()
             .FirstOrDefault(n => n.FileName == fileName);
         if (blobData == null)
+        {
+            _logger.LogInformation($"Triggered(get) api controller. FileName not found in the db. FileName: {fileName}");
             return new ObjectResult("File with that name not found.") { StatusCode = 404 };
+        }
 	
         CancellationToken ct = default;
 		

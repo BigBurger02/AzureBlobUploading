@@ -5,6 +5,7 @@
 @using TestTask.Model
 @inject IBlobStorageService Blob
 @inject IDbContextFactory<BlobContext> DbFactory
+@inject ILogger<BlobStorageService> logger
 
 <PageTitle>Home</PageTitle>
 
@@ -47,11 +48,13 @@
     private void OnInputFileChange(InputFileChangeEventArgs e)
     {
         file = e.File;
+        logger.LogInformation($"File {file.Name} added to the form.");
         this.StateHasChanged();
     }
     
     private async void OnSubmit()
     {
+        logger.LogInformation($"Form submitted with {file.Name} and {Model.Email}.");
         fileLoading = true;
         
         try
@@ -59,11 +62,14 @@
             blobUrl = await Blob.UploadFileToBlobAsync(file.Name, file.ContentType, file.OpenReadStream(20971520));
             if (blobUrl == null)
             {
+                logger.LogError($"File {file.Name} upload failed.");
                 warninngMessage = "File Upload failed, Please try again!!";
             }
+            logger.LogInformation($"File {file.Name} uploaded.");
         }
         catch (Exception ex)
         {
+            logger.LogError($"File {file.Name} upload failed.");
             warninngMessage = "File Upload failed, Please try again!!";
         }   
 
@@ -71,11 +77,14 @@
         
         fileLoading = false;
         
+        logger.LogInformation($"Leaving OnSubmit method with file: {file.Name}.");
         this.StateHasChanged();
     }
     
     private async Task AddUploadAsync()
     {
+        logger.LogInformation($"AddUploadAsync method with file: {file.Name}.");
+        
         await using var context = await DbFactory.CreateDbContextAsync();
 
         var newUpload = new Uploads()
@@ -85,6 +94,8 @@
             Uri = blobUrl
         };
         context.Uploads.Add(newUpload);
-        await context.SaveChangesAsync();
+        var id = await context.SaveChangesAsync();
+        
+        logger.LogInformation($"File uploaded, id: {id}.");
     }
 }
