@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TestTask.Services;
 using TestTask.Data;
+using TestTask.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddDbContextFactory<BlobContext>(opt =>
     opt.UseSqlite("Data Source=DB.db"));
 
 builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+builder.Services.AddTransient<IEmailSender, BrevoEmailSender>();
 
 var app = builder.Build();
 

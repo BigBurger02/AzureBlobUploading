@@ -17,21 +17,12 @@ public class Trigger1
         var client = new HttpClient();
         try
         {
-            var content = await client.GetStringAsync("https://localhost:7243/api/Triggered/" + name);
-            log.LogInformation($"Localhost server response: {content}");
+            var content = client.GetStringAsync("https://reenbitapplication.azurewebsites.net/api/Triggered/" + name);
+            log.LogInformation($"Server response: {content}");
         }
-        catch (Exception e)
+        catch (Exception exception)
         {
-            log.LogInformation($"Exception thrown while connecting to localhost: {e}. Trying to call another uri");
-            try
-            {
-                var content = client.GetStringAsync("https://reenbitapplication.azurewebsites.net/api/Triggered/" + name);
-                log.LogInformation($"Azure server response: {content}");
-            }
-            catch (Exception exception)
-            {
-                log.LogInformation($"Exception thrown while connecting to Azure: {exception}");
-            }
+            log.LogInformation($"Exception thrown while connecting to the server: {exception}");
         }
         
         log.LogInformation($"Exiting the trigger");

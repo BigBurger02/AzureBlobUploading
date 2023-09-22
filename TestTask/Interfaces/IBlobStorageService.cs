@@ -1,4 +1,4 @@
-namespace TestTask.Services;
+namespace TestTask.Interfaces;
 
 public interface IBlobStorageService
 {
